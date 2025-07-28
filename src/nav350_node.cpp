@@ -1,6 +1,8 @@
 #include "rtcrobot_nav350/nav350_node.hpp"
+#include <csignal>
 #include <memory>
 #include <rclcpp/parameter_value.hpp>
+#include <signal.h>
 
 namespace rtcrobot_nav350 {
 
@@ -264,11 +266,31 @@ void Nav350Node::publish_tf() {
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(rtcrobot_nav350::Nav350Node);
 
+// Signal handler cho Ctrl+C
+void signal_handler(int signal) {
+  if (signal == SIGINT) {
+    RCLCPP_INFO(rclcpp::get_logger("nav350_node"),
+                "Nhận signal SIGINT (Ctrl+C), đang shutdown...");
+    rclcpp::shutdown();
+  }
+}
+
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
+
+  // Đăng ký signal handler cho SIGINT (Ctrl+C)
+  signal(SIGINT, signal_handler);
+
   google::InitGoogleLogging(argv[0]);
   RosLogSink ros_log_sink;
+
+  RCLCPP_INFO(rclcpp::get_logger("nav350_node"),
+              "Nav350 Node đã khởi động. Nhấn Ctrl+C để thoát.");
+
   rclcpp::spin(std::make_shared<rtcrobot_nav350::Nav350Node>());
+
+  RCLCPP_INFO(rclcpp::get_logger("nav350_node"),
+              "Nav350 Node đã shutdown thành công.");
   google::ShutdownGoogleLogging();
   rclcpp::shutdown();
   return 0;
