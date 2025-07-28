@@ -18,4 +18,11 @@ def generate_launch_description():
         parameters=[param_file]
     )
 
-    return launch.LaunchDescription([nav350_nodde])
+    pub_pose = Node(
+        package='rtcrobot_pose',
+        executable='rtcrobot_pose',
+        name="rtcrobot_pose",
+        output='screen',
+    )
+
+    return launch.LaunchDescription([nav350_nodde, pub_pose])
