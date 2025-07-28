@@ -32,23 +32,11 @@ endforeach()
 
 find_package(glog REQUIRED)
 
-# ==== Add third party libraries ====
-
-file(GLOB THIRD_PARTY_LIBS
-  ${CMAKE_SOURCE_DIR}/third_party/*/lib/*.so
-  ${CMAKE_SOURCE_DIR}/third_party/*/lib/*.a
-)
-file(GLOB THIRD_PARTY_INCLUDES
-  ${CMAKE_SOURCE_DIR}/third_party/*/include
-)
-
-# ============================
 
 
 # ==== Include directories ====
 include_directories(
   include
-  ${THIRD_PARTY_INCLUDES}
   ${glog_INCLUDE_DIRS}
 )
 # ============================
@@ -59,6 +47,7 @@ set(NAV350_COMPONENTS
 
 # ==== Library ==== (Ros2 component)
 add_library(${NAV350_COMPONENTS} SHARED
+  src/sick_nav350.cpp
   src/nav350_node.cpp
 )
 target_include_directories(${NAV350_COMPONENTS}
@@ -67,7 +56,6 @@ target_include_directories(${NAV350_COMPONENTS}
   $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(${NAV350_COMPONENTS}
-  ${THIRD_PARTY_LIBS}
   glog::glog
 )
 ament_target_dependencies(${NAV350_COMPONENTS}

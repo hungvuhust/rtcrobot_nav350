@@ -131,10 +131,18 @@ void Nav350Node::publish_scan() {
 
     scan_msg->angle_increment= 2 * M_PI / scan_data.scan_data.num_datas;
     scan_msg->ranges.resize(scan_data.scan_data.num_datas);
-
-    for (int i= 0; i < scan_data.scan_data.num_datas; i++) {
-      scan_msg->ranges[i]= scan_data.scan_data.distance_data[i] * 0.001;
+    if (scan_data.is_remission_data) {
+      scan_msg->intensities.resize(scan_data.remission_data.num_datas);
+      for (int i= 0; i < scan_data.scan_data.num_datas; i++) {
+        scan_msg->ranges[i]     = scan_data.scan_data.distance_data[i] * 0.001;
+        scan_msg->intensities[i]= scan_data.remission_data.remission_data[i];
+      }
+    } else {
+      for (int i= 0; i < scan_data.scan_data.num_datas; i++) {
+        scan_msg->ranges[i]= scan_data.scan_data.distance_data[i] * 0.001;
+      }
     }
+
     scan_msg->header.stamp   = now();
     scan_msg->header.frame_id= frame_id_;
     // Publish message of scan
@@ -187,7 +195,7 @@ void Nav350Node::publish_landmark() {
         marker.header.stamp   = now();
         marker.ns             = "landmark";
         if (landmark.is_opt_landmark_data) {
-          marker.id= landmark.optional_landmark_data.global_id;
+          marker.id= landmark.optional_landmark_data.local_id;
           if (landmark.optional_landmark_data.global_id != 65535) {
             // Landmark Known
             marker.color.r= 0.0;
