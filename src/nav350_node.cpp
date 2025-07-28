@@ -159,8 +159,8 @@ void Nav350Node::publish_pose() {
     auto pose_data        = nav350_->get_pose_data();
     last_pose_data_.theta = (pose_data.phi * M_PI / 180.0 * 0.001) - M_PI;
     // Rotate x, y by -M_PI
-    last_pose_data_.x     = pose_data.x * 0.001;
-    last_pose_data_.y     = pose_data.y * 0.001;
+    last_pose_data_.x     = -pose_data.x * 0.001;
+    last_pose_data_.y     = -pose_data.y * 0.001;
     // rotate_x_yby_angle_offset(last_pose_data_.x, last_pose_data_.y);
     // Create message of pose
     auto pose_msg         = std::make_unique<Nav350Data>();
