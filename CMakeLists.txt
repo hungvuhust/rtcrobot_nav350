@@ -97,13 +97,6 @@ install (TARGETS nav350_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(PROGRAMS
-  scripts/mapping_mode_nav350.py
-  scripts/test.py
-  scripts/test_test.py
-  DESTINATION lib/${PROJECT_NAME}
-)
-
 install(DIRECTORY
   launch config
   DESTINATION share/${PROJECT_NAME}
