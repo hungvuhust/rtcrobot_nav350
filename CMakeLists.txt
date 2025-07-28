@@ -23,6 +23,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   visualization_msgs
   geometry_msgs
   nav_msgs
+  rtcrobot_interfaces
 )
 
 foreach(pkg ${THIS_PACKAGE_INCLUDE_DEPENDS})
