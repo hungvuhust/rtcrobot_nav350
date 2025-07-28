@@ -6,5 +6,6 @@ nav350_node:
     # The frame_id
     nav350_frame_id: "nav350"
     map_frame_id: "map"
-    # 
+    # The height of the Nav350
+    nav350_height: 1.9753
 
