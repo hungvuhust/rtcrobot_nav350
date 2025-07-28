@@ -49,16 +49,19 @@ bool Nav350Node::init_parameters() {
     declare_parameter("port", rclcpp::ParameterValue(1111));
     declare_parameter("nav350_frame_id", rclcpp::ParameterValue("base_link"));
     declare_parameter("map_frame_id", rclcpp::ParameterValue("map"));
+    declare_parameter("nav350_height", rclcpp::ParameterValue(1.9753));
     // GET PARAMETER
     get_parameter("ip_address", host_);
     get_parameter("port", port_);
     get_parameter("nav350_frame_id", frame_id_);
     get_parameter("map_frame_id", map_id_);
+    get_parameter("nav350_height", nav350_height_);
     // LOG
     LOG(INFO) << "ip_address: " << host_;
     LOG(INFO) << "port: " << port_;
     LOG(INFO) << "nav350_frame_id: " << frame_id_;
     LOG(INFO) << "map_frame_id: " << map_id_;
+    LOG(INFO) << "nav350_height: " << nav350_height_;
   } catch (const std::exception &e) {
     LOG(ERROR) << "Exception: " << e.what();
     return false;
@@ -250,7 +253,7 @@ void Nav350Node::publish_tf() {
     transform.child_frame_id          = frame_id_;
     transform.transform.translation.x = last_pose_data_.x;
     transform.transform.translation.y = last_pose_data_.y;
-    transform.transform.translation.z = 2.6;
+    transform.transform.translation.z = nav350_height_;
     // convert phi to quaternion
     tf2::Quaternion q;
     q.setRPY(0, 0, last_pose_data_.theta);

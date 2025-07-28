@@ -75,6 +75,7 @@ private:
   int         port_{2112};
   std::string frame_id_{"nav_link"};
   std::string map_id_{"map"};
+  double      nav350_height_{1.9753};
 
   // Timmer
   rclcpp::TimerBase::SharedPtr timer_{nullptr};
