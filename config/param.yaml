@@ -1,7 +1,7 @@
 nav350_node:
   ros__parameters:
     # The IP address of the Nav350
-    ip_address: "192.168.5.98"
+    ip_address: "192.168.5.198"
     port: 2112
     # The frame_id
     nav350_frame_id: "nav_link"
