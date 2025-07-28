@@ -157,16 +157,19 @@ void Nav350Node::publish_pose() {
   try {
     // Get data of pose
     auto pose_data        = nav350_->get_pose_data();
-    last_pose_data_.theta = (pose_data.phi * M_PI / 180.0 * 0.001) - M_PI;
+    last_pose_data_.theta = (pose_data.phi * M_PI / 180.0 * 0.001);
+    if (last_pose_data_.theta > M_PI) {
+      last_pose_data_.theta -= 2 * M_PI;
+    }
     // Rotate x, y by -M_PI
-    last_pose_data_.x     = -pose_data.x * 0.001;
-    last_pose_data_.y     = -pose_data.y * 0.001;
+    last_pose_data_.x = -pose_data.x * 0.001;
+    last_pose_data_.y = -pose_data.y * 0.001;
     // rotate_x_yby_angle_offset(last_pose_data_.x, last_pose_data_.y);
     // Create message of pose
-    auto pose_msg         = std::make_unique<Nav350Data>();
-    pose_msg->x           = last_pose_data_.x;
-    pose_msg->y           = last_pose_data_.y;
-    pose_msg->theta       = last_pose_data_.theta;
+    auto pose_msg     = std::make_unique<Nav350Data>();
+    pose_msg->x       = last_pose_data_.x;
+    pose_msg->y       = last_pose_data_.y;
+    pose_msg->theta   = last_pose_data_.theta;
     // Opt
     if (pose_data.is_opt_pose_data) {
       pose_msg->reflector = pose_data.optional_pose_data.num_reflector_used;
