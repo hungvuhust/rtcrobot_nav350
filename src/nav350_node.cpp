@@ -115,7 +115,7 @@ void Nav350Node::timer_callback() {
     publish_scan();
     publish_pose();
     publish_landmark();
-    publish_tf();
+    // publish_tf();
   }
 }
 

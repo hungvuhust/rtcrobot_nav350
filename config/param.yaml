@@ -4,7 +4,7 @@ nav350_node:
     ip_address: "192.168.5.198"
     port: 2112
     # The frame_id
-    nav350_frame_id: "nav_link"
+    nav350_frame_id: "nav350"
     map_frame_id: "map"
     # 
 
