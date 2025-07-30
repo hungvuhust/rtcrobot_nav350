@@ -547,6 +547,8 @@ void SickNav350::intitialize() {
   send_command("SET_SCAN_DATA_FORMAT", "1 0");
   // Set Pose Data Format
   send_command("SET_POS_DATA_FORMAT", "1 1");
+  // Set Size of Reflector
+  send_command("SET_REFLECTOR_SIZE", "28");
 }
 
 void SickNav350::unintitialize() {
