@@ -16,25 +16,27 @@
 #include <thread>
 
 #include <sick_nav350/log_sink.hpp>
-constexpr size_t BUFFER_SIZE= 1 << 16;
+
+constexpr size_t BUFFER_SIZE = 1 << 16;
 namespace sick_nav350 {
 
 enum Nav350OperationMode {
-  POWER_DOWN        = 0,
-  STANDBY           = 1,
-  MAPPING           = 2,
-  LANDMARK_DETECTION= 3,
-  NAVIGATION        = 4,
+  POWER_DOWN         = 0,
+  STANDBY            = 1,
+  MAPPING            = 2,
+  LANDMARK_DETECTION = 3,
+  NAVIGATION         = 4,
 };
 
 enum FlagSetParram {
-  SET_ACCESS= 0,
+  SET_ACCESS = 0,
   SET_MODE,
   SET_LAYER,
   READ_DEVICE_IDENT,
   REQUEST_POSITION_DATA,
   SET_LANDMARK_DATA_FORMAT,
   SET_SCAN_DATA_FORMAT,
+  READ_LAYER,
 };
 
 class SickNav350 {
@@ -43,7 +45,7 @@ private:
   Epoll     epoll_;
 
   std::map<std::string, std::function<void(const std::vector<std::string> &)>>
-      callback_map;
+    callback_map;
 
   // Data
   PoseData                  pose_data_;
@@ -59,21 +61,23 @@ private:
 
 public:
   SickNav350(std::string ip, int port);
-  SickNav350()                             = delete;
-  SickNav350(const SickNav350 &)           = delete;
-  SickNav350 &operator=(const SickNav350 &)= delete;
-  SickNav350(SickNav350 &&)                = delete;
-  SickNav350 &operator=(SickNav350 &&)     = delete;
+  SickNav350()                              = delete;
+  SickNav350(const SickNav350 &)            = delete;
+  SickNav350 &operator=(const SickNav350 &) = delete;
+  SickNav350(SickNav350 &&)                 = delete;
+  SickNav350 &operator=(SickNav350 &&)      = delete;
 
   ~SickNav350();
 
-  using SharedPtr= std::shared_ptr<SickNav350>;
-  using UniquePtr= std::unique_ptr<SickNav350>;
+  using SharedPtr = std::shared_ptr<SickNav350>;
+  using UniquePtr = std::unique_ptr<SickNav350>;
 
 public:
   void intitialize();
   void unintitialize();
-  bool is_connect() { return socket_.is_connected(); }
+  bool is_connect() {
+    return socket_.is_connected();
+  }
   bool send_command(const std::string command, const std::string &params);
 
   PoseData get_pose_data() {
@@ -89,10 +93,15 @@ public:
     return scan_data_;
   }
 
+  uint16_t get_current_layer() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return current_layer_;
+  }
+
   void print_data() {
     std::lock_guard<std::mutex> lock(mutex_);
     pose_data_.print();
-    for (const auto &landmark: current_landmark_data_) {
+    for (const auto &landmark : current_landmark_data_) {
       landmark.print();
     }
     scan_data_.print();
@@ -102,6 +111,7 @@ public:
   bool set_layer(uint16_t layer);
   bool set_operation_mode(uint16_t mode);
   bool get_data_navigation();
+  bool send_get_current_layer();
 
 private:
   void handle_set_access(const std::vector<std::string> &tokens);
@@ -109,26 +119,31 @@ private:
   void handle_set_layer(const std::vector<std::string> &tokens);
   void handle_read_device_ident(const std::vector<std::string> &tokens);
   void handle_request_position_data(const std::vector<std::string> &tokens);
-  bool check_response(
-      const std::vector<std::string> &tokens, const std::string &command);
+  void handle_current_layer(const std::vector<std::string> &tokens);
+  bool check_response(const std::vector<std::string> &tokens,
+                      const std::string              &command);
 
 protected:
   void        thread_poll();
   std::string receive_frame();
-  std::string create_frame(
-      const std::string &commandKey, const std::string &params= "");
+  std::string create_frame(const std::string &commandKey,
+                           const std::string &params = "");
 
 private:
-  void process_pose_get_data(const std::vector<std::string> &tokens);
-  NavScan
-      parse_scan_data(const std::vector<std::string> &tokens, size_t &index);
+  void    process_pose_get_data(const std::vector<std::string> &tokens);
+  NavScan parse_scan_data(const std::vector<std::string> &tokens,
+                          size_t                         &index);
   std::vector<LandmarkData> parse_landmark_data(
-      const std::vector<std::string> &tokens, size_t &index);
-  PoseData
-       parse_pose_data(const std::vector<std::string> &tokens, size_t &index);
-  bool is_number(const std::string &s);
-  int  convert_hex_to_dec(const std::string &num);
+    const std::vector<std::string> &tokens,
+    size_t                         &index);
+  PoseData parse_pose_data(const std::vector<std::string> &tokens,
+                           size_t                         &index);
+  bool     is_number(const std::string &s);
+  int      convert_hex_to_dec(const std::string &num);
   std::vector<std::string> split_string(const std::string &str, char delimiter);
+
+  uint16_t current_layer_{0};
+  void     process_current_layer(const std::vector<std::string> &tokens);
 };
 
-} // namespace sick_nav350
+}  // namespace sick_nav350

@@ -92,7 +92,7 @@ struct LandmarkData {
 };
 struct NavScan {
   struct ScanData {
-    std::string           content_type; // DIST1 or ANGL1
+    std::string           content_type;  // DIST1 or ANGL1
     double                scale_factor;
     double                scale_offset;
     int32_t               start_angle;
@@ -136,4 +136,4 @@ struct NavScan {
   }
 };
 
-} // namespace sick_nav350
+}  // namespace sick_nav350

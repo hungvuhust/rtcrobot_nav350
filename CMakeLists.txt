@@ -32,7 +32,7 @@ endforeach()
 # ============================
 
 find_package(glog REQUIRED)
-
+find_package(spdlog REQUIRED)
 
 
 # ==== Include directories ====
@@ -58,6 +58,7 @@ target_include_directories(${NAV350_COMPONENTS}
 )
 target_link_libraries(${NAV350_COMPONENTS}
   glog::glog
+  spdlog::spdlog
 )
 ament_target_dependencies(${NAV350_COMPONENTS}
   ${THIS_PACKAGE_INCLUDE_DEPENDS}

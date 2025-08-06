@@ -15,16 +15,21 @@ SickNav350::SickNav350(std::string ip, int port) : socket_(ip, port) {
   }
 
   callback_map[SICK_NAV350_COMMANDS.at("SET_ACCESS").second] =
-      std::bind(&SickNav350::handle_set_access, this, std::placeholders::_1);
+    std::bind(&SickNav350::handle_set_access, this, std::placeholders::_1);
   callback_map[SICK_NAV350_COMMANDS.at("SET_MODE").second] =
-      std::bind(&SickNav350::handle_set_mode, this, std::placeholders::_1);
+    std::bind(&SickNav350::handle_set_mode, this, std::placeholders::_1);
   callback_map[SICK_NAV350_COMMANDS.at("SET_LAYER").second] =
-      std::bind(&SickNav350::handle_set_layer, this, std::placeholders::_1);
-  callback_map[SICK_NAV350_COMMANDS.at("READ_DEVICE_IDENT").second] = std::bind(
-      &SickNav350::handle_read_device_ident, this, std::placeholders::_1);
+    std::bind(&SickNav350::handle_set_layer, this, std::placeholders::_1);
+  callback_map[SICK_NAV350_COMMANDS.at("READ_DEVICE_IDENT").second] =
+    std::bind(&SickNav350::handle_read_device_ident,
+              this,
+              std::placeholders::_1);
   callback_map[SICK_NAV350_COMMANDS.at("REQUEST_POSITION_DATA").second] =
-      std::bind(&SickNav350::handle_request_position_data, this,
-                std::placeholders::_1);
+    std::bind(&SickNav350::handle_request_position_data,
+              this,
+              std::placeholders::_1);
+  callback_map[SICK_NAV350_COMMANDS.at("READ_LAYER").second] =
+    std::bind(&SickNav350::handle_current_layer, this, std::placeholders::_1);
 
   for (const auto &command : callback_map) {
     LOG(INFO) << " Registering callback for: " << command.first << std::endl;
@@ -62,9 +67,9 @@ void SickNav350::thread_poll() {
 }
 
 std::string SickNav350::receive_frame() {
-  struct epoll_event events[1]; // Chỉ cần 1 socket, không cần nhiều event
+  struct epoll_event events[1];  // Chỉ cần 1 socket, không cần nhiều event
 
-  int nfds = epoll_wait(epoll_.getEpollFd(), events, 1, 5000); // Chờ tối đa 5s
+  int nfds = epoll_wait(epoll_.getEpollFd(), events, 1, 5000);  // Chờ tối đa 5s
   if (nfds < 0) {
     perror(" epoll_wait failed");
     return "";
@@ -74,7 +79,7 @@ std::string SickNav350::receive_frame() {
     return "";
   }
 
-  if (events[0].events & EPOLLIN) { // Kiểm tra nếu có dữ liệu đến
+  if (events[0].events & EPOLLIN) {  // Kiểm tra nếu có dữ liệu đến
     std::string response;
     char        buffer[BUFFER_SIZE] = {0};
     ssize_t     bytes_received      = 0;
@@ -159,7 +164,7 @@ void SickNav350::handle_set_layer(const std::vector<std::string> &tokens) {
 }
 
 void SickNav350::handle_read_device_ident(
-    const std::vector<std::string> &tokens) {
+  const std::vector<std::string> &tokens) {
   if (check_response(tokens, "READ_DEVICE_IDENT")) {
     LOG(INFO) << " Device Ident: " << tokens[2] << std::endl;
   } else {
@@ -168,7 +173,7 @@ void SickNav350::handle_read_device_ident(
 }
 
 void SickNav350::handle_request_position_data(
-    const std::vector<std::string> &tokens) {
+  const std::vector<std::string> &tokens) {
   if (check_response(tokens, "REQUEST_POSITION_DATA")) {
     process_pose_get_data(tokens);
   }
@@ -183,24 +188,31 @@ void SickNav350::process_pose_get_data(const std::vector<std::string> &tokens) {
   int errorCode = convert_hex_to_dec(tokens[3]);
   if (errorCode != 0) {
     switch (errorCode) {
-    case 1:
-      LOG(ERROR) << "wrong operating mode: " << errorCode << std::endl;
-      break;
-    case 2:
-      LOG(ERROR) << "asynchrony Method terminated: " << errorCode << std::endl;
-      break;
-    case 3: LOG(ERROR) << "invalid data: " << errorCode << std::endl; break;
-    case 4:
-      LOG(ERROR) << "no position available: " << errorCode << std::endl;
-      break;
-    case 5: LOG(ERROR) << "time out: " << errorCode << std::endl; break;
-    case 6:
-      LOG(ERROR) << "method already active: " << errorCode << std::endl;
-      break;
-    case 7: LOG(ERROR) << "general error: " << errorCode << std::endl; break;
-    default:
-      LOG(ERROR) << "Doen't know error code: " << errorCode << std::endl;
-      break;
+      case 1:
+        LOG(ERROR) << "wrong operating mode: " << errorCode << std::endl;
+        break;
+      case 2:
+        LOG(ERROR) << "asynchrony Method terminated: " << errorCode
+                   << std::endl;
+        break;
+      case 3:
+        LOG(ERROR) << "invalid data: " << errorCode << std::endl;
+        break;
+      case 4:
+        LOG(ERROR) << "no position available: " << errorCode << std::endl;
+        break;
+      case 5:
+        LOG(ERROR) << "time out: " << errorCode << std::endl;
+        break;
+      case 6:
+        LOG(ERROR) << "method already active: " << errorCode << std::endl;
+        break;
+      case 7:
+        LOG(ERROR) << "general error: " << errorCode << std::endl;
+        break;
+      default:
+        LOG(ERROR) << "Doen't know error code: " << errorCode << std::endl;
+        break;
     }
     return;
   }
@@ -208,7 +220,7 @@ void SickNav350::process_pose_get_data(const std::vector<std::string> &tokens) {
   // LOG(INFO) << " Valid response received. Parsing data..." <<
   // std::endl;
   try {
-    size_t   index        = 5; // Start at Mask
+    size_t   index        = 5;  // Start at Mask
     uint16_t mask         = convert_hex_to_dec(tokens[index++]);
     bool     is_pose_data = convert_hex_to_dec(tokens[index++]) == 1;
     if (is_pose_data) {
@@ -216,39 +228,40 @@ void SickNav350::process_pose_get_data(const std::vector<std::string> &tokens) {
     }
 
     switch (mask) {
-    case 0: // pose + ref
-    {
-      // Landmark Data
-      bool is_landmark_data = convert_hex_to_dec(tokens[index++]) == 1;
-      if (is_landmark_data) {
-        current_landmark_data_ = parse_landmark_data(tokens, index);
+      case 0:  // pose + ref
+      {
+        // Landmark Data
+        bool is_landmark_data = convert_hex_to_dec(tokens[index++]) == 1;
+        if (is_landmark_data) {
+          current_landmark_data_ = parse_landmark_data(tokens, index);
+        }
+        break;
       }
-      break;
-    }
-    case 1: // pose + scan
-    {
-      // Scan Data
-      uint16_t type_scan_data = convert_hex_to_dec(tokens[index++]);
-      if (type_scan_data != 0) {
-        scan_data_ = parse_scan_data(tokens, index);
+      case 1:  // pose + scan
+      {
+        // Scan Data
+        uint16_t type_scan_data = convert_hex_to_dec(tokens[index++]);
+        if (type_scan_data != 0) {
+          scan_data_ = parse_scan_data(tokens, index);
+        }
+        break;
       }
-      break;
-    }
-    case 2: // pose + ref + scan
-    {
-      // Landmark Data
-      bool is_landmark_data = convert_hex_to_dec(tokens[index++]) == 1;
-      if (is_landmark_data) {
-        current_landmark_data_ = parse_landmark_data(tokens, index);
+      case 2:  // pose + ref + scan
+      {
+        // Landmark Data
+        bool is_landmark_data = convert_hex_to_dec(tokens[index++]) == 1;
+        if (is_landmark_data) {
+          current_landmark_data_ = parse_landmark_data(tokens, index);
+        }
+        // Scan Data
+        uint16_t type_scan_data = convert_hex_to_dec(tokens[index++]);
+        if (type_scan_data != 0) {
+          scan_data_ = parse_scan_data(tokens, index);
+        }
+        break;
       }
-      // Scan Data
-      uint16_t type_scan_data = convert_hex_to_dec(tokens[index++]);
-      if (type_scan_data != 0) {
-        scan_data_ = parse_scan_data(tokens, index);
-      }
-      break;
-    }
-    default: break;
+      default:
+        break;
     }
 
     flag_set_parram_ &= ~(1 << REQUEST_POSITION_DATA);
@@ -256,6 +269,22 @@ void SickNav350::process_pose_get_data(const std::vector<std::string> &tokens) {
     flag_set_parram_ &= ~(1 << REQUEST_POSITION_DATA);
     LOG(ERROR) << e.what() << std::endl;
   }
+}
+
+void SickNav350::handle_current_layer(const std::vector<std::string> &tokens) {
+  if (check_response(tokens, "READ_LAYER")) {
+    process_current_layer(tokens);
+  }
+}
+
+void SickNav350::process_current_layer(const std::vector<std::string> &tokens) {
+  if (tokens.size() < 3 || !check_response(tokens, "READ_LAYER")) {
+    LOG(ERROR) << " Invalid response format" << std::endl;
+    return;
+  }
+  current_layer_ = convert_hex_to_dec(tokens[2]);
+  LOG(INFO) << " Current layer: " << current_layer_ << std::endl;
+  flag_set_parram_ &= ~(1 << READ_LAYER);
 }
 
 PoseData SickNav350::parse_pose_data(const std::vector<std::string> &tokens,
@@ -277,16 +306,16 @@ PoseData SickNav350::parse_pose_data(const std::vector<std::string> &tokens,
       pose.optional_pose_data.nav_mode    = convert_hex_to_dec(tokens[index++]);
       pose.optional_pose_data.info_state  = convert_hex_to_dec(tokens[index++]);
       pose.optional_pose_data.num_reflector_used =
-          convert_hex_to_dec(tokens[index++]);
+        convert_hex_to_dec(tokens[index++]);
     }
   }
   return pose;
 }
 
 // Xử lý dữ liệu LandmarkData
-std::vector<LandmarkData>
-SickNav350::parse_landmark_data(const std::vector<std::string> &tokens,
-                                size_t                         &index) {
+std::vector<LandmarkData> SickNav350::parse_landmark_data(
+  const std::vector<std::string> &tokens,
+  size_t                         &index) {
   if (index + 5 >= tokens.size()) {
     throw std::runtime_error(" LandmarkData missing fields");
   }
@@ -313,27 +342,27 @@ SickNav350::parse_landmark_data(const std::vector<std::string> &tokens,
     landmark.is_opt_landmark_data = convert_hex_to_dec(tokens[index++]) == 1;
     if (landmark.is_opt_landmark_data) {
       landmark.optional_landmark_data.local_id =
-          convert_hex_to_dec(tokens[index++]);
+        convert_hex_to_dec(tokens[index++]);
       landmark.optional_landmark_data.global_id =
-          convert_hex_to_dec(tokens[index++]);
+        convert_hex_to_dec(tokens[index++]);
       landmark.optional_landmark_data.landmark_type =
-          convert_hex_to_dec(tokens[index++]);
+        convert_hex_to_dec(tokens[index++]);
       landmark.optional_landmark_data.reflector_type =
-          convert_hex_to_dec(tokens[index++]);
+        convert_hex_to_dec(tokens[index++]);
       landmark.optional_landmark_data.reserved =
-          convert_hex_to_dec(tokens[index++]);
+        convert_hex_to_dec(tokens[index++]);
       landmark.optional_landmark_data.timestamp =
-          convert_hex_to_dec(tokens[index++]);
+        convert_hex_to_dec(tokens[index++]);
       landmark.optional_landmark_data.size =
-          convert_hex_to_dec(tokens[index++]);
+        convert_hex_to_dec(tokens[index++]);
       landmark.optional_landmark_data.num_hit =
-          convert_hex_to_dec(tokens[index++]);
+        convert_hex_to_dec(tokens[index++]);
       landmark.optional_landmark_data.mean_amplitude =
-          convert_hex_to_dec(tokens[index++]);
+        convert_hex_to_dec(tokens[index++]);
       landmark.optional_landmark_data.start_index =
-          convert_hex_to_dec(tokens[index++]);
+        convert_hex_to_dec(tokens[index++]);
       landmark.optional_landmark_data.end_index =
-          convert_hex_to_dec(tokens[index++]);
+        convert_hex_to_dec(tokens[index++]);
     }
     landmarks.push_back(landmark);
   }
@@ -376,9 +405,9 @@ NavScan SickNav350::parse_scan_data(const std::vector<std::string> &tokens,
     }
 
     scan.remission_data.scale_factor =
-        (double)convert_hex_to_dec(tokens[index++]);
+      (double)convert_hex_to_dec(tokens[index++]);
     scan.remission_data.scale_offset =
-        (double)convert_hex_to_dec(tokens[index++]);
+      (double)convert_hex_to_dec(tokens[index++]);
     scan.remission_data.start_angle     = convert_hex_to_dec(tokens[index++]);
     scan.remission_data.angular_step    = convert_hex_to_dec(tokens[index++]);
     scan.remission_data.timestamp_start = convert_hex_to_dec(tokens[index++]);
@@ -387,7 +416,7 @@ NavScan SickNav350::parse_scan_data(const std::vector<std::string> &tokens,
 
     for (uint16_t i = 0; i < scan.remission_data.num_datas; i++) {
       scan.remission_data.remission_data.push_back(
-          convert_hex_to_dec(tokens[index++]));
+        convert_hex_to_dec(tokens[index++]));
     }
   }
 
@@ -438,7 +467,7 @@ std::string SickNav350::create_frame(const std::string &commandKey,
     frame += " " + params;
   }
 
-  frame += "\x03"; // ETX
+  frame += "\x03";  // ETX
 
   // Debug
 
@@ -528,8 +557,25 @@ bool SickNav350::get_data_navigation() {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     auto end = std::chrono::system_clock::now();
     if (std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-            .count() > 500) {
+          .count() > 500) {
       flag_set_parram_ &= ~(1 << REQUEST_POSITION_DATA);
+      return false;
+    }
+  }
+  return true;
+}
+
+bool SickNav350::send_get_current_layer() {
+  flag_set_parram_ |= (1 << READ_LAYER);
+  send_command("READ_LAYER", "");
+  // timeout
+  auto start = std::chrono::system_clock::now();
+  while (flag_set_parram_ & (1 << READ_LAYER)) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    auto end = std::chrono::system_clock::now();
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+          .count() > 500) {
+      flag_set_parram_ &= ~(1 << READ_LAYER);
       return false;
     }
   }
@@ -560,4 +606,4 @@ void SickNav350::unintitialize() {
   set_operation_mode(Nav350OperationMode::POWER_DOWN);
 }
 
-} // namespace sick_nav350
+}  // namespace sick_nav350
