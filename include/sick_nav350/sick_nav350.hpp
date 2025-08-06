@@ -93,7 +93,7 @@ public:
     return scan_data_;
   }
 
-  uint16_t get_current_layer() {
+  int get_current_layer() {
     std::lock_guard<std::mutex> lock(mutex_);
     return current_layer_;
   }
@@ -139,11 +139,11 @@ private:
   PoseData parse_pose_data(const std::vector<std::string> &tokens,
                            size_t                         &index);
   bool     is_number(const std::string &s);
-  int      convert_hex_to_dec(const std::string &num);
+  int      convert_hex_to_dec(const std::string num);
   std::vector<std::string> split_string(const std::string &str, char delimiter);
 
-  uint16_t current_layer_{0};
-  void     process_current_layer(const std::vector<std::string> &tokens);
+  int  current_layer_{0};
+  void process_current_layer(const std::vector<std::string> &tokens);
 };
 
 }  // namespace sick_nav350

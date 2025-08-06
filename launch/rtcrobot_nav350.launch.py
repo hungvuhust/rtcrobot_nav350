@@ -25,4 +25,6 @@ def generate_launch_description():
         output='screen',
     )
 
-    return launch.LaunchDescription([nav350_nodde, pub_pose])
+    return launch.LaunchDescription([nav350_nodde,
+                                    #  pub_pose,
+                                     ])

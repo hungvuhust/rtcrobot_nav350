@@ -69,7 +69,8 @@ void SickNav350::thread_poll() {
 std::string SickNav350::receive_frame() {
   struct epoll_event events[1];  // Chỉ cần 1 socket, không cần nhiều event
 
-  int nfds = epoll_wait(epoll_.getEpollFd(), events, 1, 5000);  // Chờ tối đa 5s
+  int nfds =
+    epoll_wait(epoll_.getEpollFd(), events, 1, 10000);  // Chờ tối đa 10s
   if (nfds < 0) {
     perror(" epoll_wait failed");
     return "";
@@ -99,11 +100,17 @@ std::string SickNav350::receive_frame() {
 #if DEBUG
     LOG(INFO) << "Received frame: " << response << std::endl;
 #endif
+
+    // remove from  \x03 to the end
+    // response.replace(response.find("\x03"), 1, "");
+    // response.replace(response.find("\x02"), 1, "");
+
     std::vector<std::string> tokens = split_string(response, ' ');
     if (callback_map.find(tokens[1].c_str()) != callback_map.end()) {
       std::lock_guard<std::mutex> lock(mutex_);
       callback_map[tokens[1]](tokens);
     }
+
     return response;
   }
   return "";
@@ -133,7 +140,15 @@ bool SickNav350::check_response(const std::vector<std::string> &tokens,
 
 void SickNav350::handle_set_access(const std::vector<std::string> &tokens) {
   if (check_response(tokens, "SET_ACCESS")) {
-    if (tokens[2] == "1\x03") {
+    std::string access_mode_str = tokens[2];
+    if (access_mode_str.find("\x03") != std::string::npos) {
+      access_mode_str.replace(access_mode_str.find("\x03"), 1, "");
+    }
+    if (access_mode_str.find("\x02") != std::string::npos) {
+      access_mode_str.replace(access_mode_str.find("\x02"), 1, "");
+    }
+
+    if (access_mode_str == "1") {
       LOG(INFO) << " Access mode success" << std::endl;
       flag_set_parram_ &= ~(1 << SET_ACCESS);
     } else {
@@ -282,8 +297,20 @@ void SickNav350::process_current_layer(const std::vector<std::string> &tokens) {
     LOG(ERROR) << " Invalid response format" << std::endl;
     return;
   }
-  current_layer_ = convert_hex_to_dec(tokens[2]);
+
+  // replace token[2] if /x03
+  std::string layer_str = tokens[2];
+  if (layer_str.find("\x03") != std::string::npos) {
+    layer_str.replace(layer_str.find("\x03"), 1, "");
+  }
+  if (layer_str.find("\x02") != std::string::npos) {
+    layer_str.replace(layer_str.find("\x02"), 1, "");
+  }
+
+  current_layer_ = (convert_hex_to_dec(layer_str));
+
   LOG(INFO) << " Current layer: " << current_layer_ << std::endl;
+
   flag_set_parram_ &= ~(1 << READ_LAYER);
 }
 
@@ -428,7 +455,7 @@ bool SickNav350::is_number(const std::string &s) {
   return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
 }
 
-int SickNav350::convert_hex_to_dec(const std::string &num) {
+int SickNav350::convert_hex_to_dec(const std::string num) {
   int suma = 0;
   for (size_t i = 0; i < num.length(); i++) {
     if (num[i] >= 65) {
